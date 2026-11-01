@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "liminal-plugin-alpaca"
+version = "1.4.0"  # the plugin's own release (CHANGELOG.md); the app shows it on the Plugins view
+description = "Alpaca for Liminal: US stock and crypto bars and streams on Alpaca's API, with its overnight feed on Blue Ocean."
+readme = "README.md"
+requires-python = ">=3.10"
+# the app it plugs into; which of its releases can load it is the plugin API the plugin declares
+# (PLUGIN.api, checked when the app loads it), not this line
+dependencies = ["liminal"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.entry-points."liminal.providers"]
+alpaca = "liminal_plugin_alpaca"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
