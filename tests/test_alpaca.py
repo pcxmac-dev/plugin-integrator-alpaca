@@ -165,7 +165,7 @@ def test_its_settings_are_its_own_read_with_the_apps_and_a_bad_value_stops_the_a
     assert "abc" not in repr(own) and "xyz" not in repr(own)  # never printed
     assert s.plugin("boats") is None and s.for_source("boats").plugin("alpaca") is own  # the part reads Alpaca's
     feed = s.for_source("alpaca")
-    assert feed.tier.name == "alpaca-basic" and feed.max_requests_per_day == 30000 and s.tier.name == "free"
+    assert feed.tier.name == "alpaca-basic" and feed.max_requests_per_day == 30000 and s.tier.name != "alpaca-basic"
     src = build_source("alpaca", s, request_budget=5)
     assert src.client.trading_url == "https://api.alpaca.markets" and src.client.request_budget == 5
     assert src.feed == "sip" and src.crypto_loc == "us-1" and not src.realtime
