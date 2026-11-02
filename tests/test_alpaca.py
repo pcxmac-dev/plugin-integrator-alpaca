@@ -187,7 +187,7 @@ def test_the_app_loads_its_two_feeds_from_this_package_with_its_own_version():
     for name in ("alpaca", "boats"):
         p = provider(name)
         assert p is not None, dict(registry.errors())
-        assert p.origin == "package: liminal-plugin-alpaca (liminal_plugin_alpaca)"
+        assert p.origin in {"package: liminal-plugin-alpaca (liminal_plugin_alpaca)", "plugins/liminal-plugin-alpaca (liminal_plugin_alpaca)"}  # its package, or its checkout in the workspace\'s plugin directory
         assert p.version == version("liminal-plugin-alpaca") and p.api == "1.11"
         assert registry.api_refusal(p.api) is None
     assert alpaca.ALPACA.version == "" and alpaca.BOATS.version == "" and alpaca.ALPACA.settings is settings_of
