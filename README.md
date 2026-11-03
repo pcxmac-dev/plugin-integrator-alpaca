@@ -1,6 +1,6 @@
 # liminal-plugin-alpaca
 
-Alpaca (alpaca.markets) for [Liminal](https://github.com/pcxmac-dev/liminal): one plugin, two feeds on
+Alpaca (alpaca.markets) for [Liminal](https://github.com/pcxmac-dev/liminal-app): one plugin, two feeds on
 one account's keys:
 
 - `alpaca`: US stocks on the consolidated tape (SIP) from 2016, minute and day bars, the session up
@@ -13,7 +13,7 @@ one account's keys:
 Both feeds share the account's limits: one rate window, one daily cap.
 
 A Liminal provider plugin released on its own. The app finds it through the entry point group
-`liminal.providers` and lists it on the Plugins view and in `python -m liminal plugins`
+`liminal.providers` and lists it on the Plugins view and in `liminal plugins`
 as `package: liminal-plugin-alpaca`, with this package's version.
 
 ## Settings
@@ -37,10 +37,10 @@ settings (plugin API 1.11), read when the app's settings load:
 Into the app's environment, from the app's folder:
 
 ```powershell
-.venv\Scripts\python.exe -m pip install "liminal-plugin-alpaca @ git+https://github.com/pcxmac-dev/liminal-plugin-alpaca@v1.4.0"
+.venv\Scripts\python.exe -m pip install "liminal-plugin-alpaca @ git+https://github.com/pcxmac-dev/liminal-plugin-alpaca@v1.4.1"
 ```
 
-or with the app's plugins (`pip install -e ".[plugins]"` in liminal). The app loads it on its next
+or with the app's plugins (`pip install -e ".[plugins]"` in liminal-app). The app loads it on its next
 start.
 
 ## Compatibility
@@ -53,7 +53,7 @@ the Plugins view.
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install "liminal @ git+https://github.com/pcxmac-dev/liminal@feature/collector"
+.venv\Scripts\python.exe -m pip install "liminal-lib @ git+https://github.com/pcxmac-dev/liminal-lib@main"
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 .venv\Scripts\python.exe -m pytest -q
 ```

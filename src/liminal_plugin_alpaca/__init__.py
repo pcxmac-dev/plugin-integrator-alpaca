@@ -38,9 +38,9 @@ from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Mapping
 
-from liminal.config import ConfigError, Tier
-from liminal.sources.registry import KeyVar, Provider, Scanned, limiter, machine_caps
-from liminal.sources.stream import PING, Live, Notice, Refused
+from liminal_lib.config import ConfigError, Tier
+from liminal_lib.sources.registry import KeyVar, Provider, Scanned, limiter, machine_caps
+from liminal_lib.sources.stream import PING, Live, Notice, Refused
 from .client import PAGE_LIMIT, TRADING_URLS, AlpacaClient, AlpacaSource, BoatsSource, normalize_trade
 
 IEX_FEED = "iex"  # its live stream's feed: IEX's trades, one venue's share (alpaca (iex))

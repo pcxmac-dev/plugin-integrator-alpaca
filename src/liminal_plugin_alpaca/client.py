@@ -21,11 +21,11 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from liminal.errors import NotEntitled
-from liminal.models import Exchange, Instrument, Stock, country, exchange_mic
-from liminal.sources.registry import RateLimiter  # the limiter the contract's clients take
-from liminal.sources.base import DataSource
-from liminal.sources.http import HttpClient
+from liminal_lib.errors import NotEntitled
+from liminal_lib.models import Exchange, Instrument, Stock, country, exchange_mic
+from liminal_lib.sources.registry import RateLimiter  # the limiter the contract's clients take
+from liminal_lib.sources.base import DataSource
+from liminal_lib.sources.http import HttpClient
 
 DATA_URL = "https://data.alpaca.markets"
 TRADING_URLS = {True: "https://paper-api.alpaca.markets", False: "https://api.alpaca.markets"}

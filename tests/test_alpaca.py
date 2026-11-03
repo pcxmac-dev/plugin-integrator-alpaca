@@ -9,11 +9,11 @@ from importlib.metadata import version
 
 import pytest
 
-from liminal import composite
-from liminal.config import ConfigError, load_settings
-from liminal.errors import NotEntitled, Unauthorized
-from liminal.sources import build_source, feed_profiles, markets, provider, rate_window, registry, stream, supports
-from liminal.symbols import resolve
+from liminal_lib import composite
+from liminal_lib.config import ConfigError, load_settings
+from liminal_lib.errors import NotEntitled, Unauthorized
+from liminal_lib.sources import build_source, feed_profiles, markets, provider, rate_window, registry, stream, supports
+from liminal_lib.symbols import resolve
 
 import liminal_plugin_alpaca as alpaca
 from liminal_plugin_alpaca import ALPACA_TIERS, AlpacaIexStream, settings_of
