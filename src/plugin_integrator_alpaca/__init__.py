@@ -3,7 +3,7 @@ and Blue Ocean's overnight session through the same keys, a feed of its own (BOA
 
 A Liminal plugin released on its own, registered under the entry point group `liminal.providers` as
 `alpaca`: one plugin, two feeds (PLUGINS: `alpaca`, `boats`), a class each on the class contract
-(plugin API 2.0, liminal_lib.sources.plugin: what a feed declares class attributes, what it does
+(plugin API 2.0, liminal_libs.sources.plugin: what a feed declares class attributes, what it does
 methods): `AlpacaPlugin` (ALPACA) and `BlueOcean` (BOATS) share the base `AlpacaFeed`, which holds
 what both declare and do alike (the account's keys, its settings' view, its plans' publication
 delays). Its keys, plan, feed, crypto venue, paper or live host and request caps are its own settings
@@ -41,10 +41,10 @@ from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from typing import Mapping
 
-from liminal_lib.config import ConfigError, Tier
-from liminal_lib.freshness import Delay
-from liminal_lib.sources.registry import FeedPlugin, KeyVar, Scanned, limiter, machine_caps
-from liminal_lib.sources.stream import PING, Live, Notice, Refused
+from liminal_libs.config import ConfigError, Tier
+from liminal_libs.freshness import Delay
+from liminal_libs.sources.registry import FeedPlugin, KeyVar, Scanned, limiter, machine_caps
+from liminal_libs.sources.stream import PING, Live, Notice, Refused
 from .client import PAGE_LIMIT, TRADING_URLS, AlpacaClient, AlpacaSource, BoatsSource, normalize_trade
 
 IEX_FEED = "iex"  # its live stream's feed: IEX's trades, one venue's share (alpaca (iex))

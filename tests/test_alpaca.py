@@ -10,15 +10,15 @@ from importlib.metadata import version
 
 import pytest
 
-from liminal_lib import composite, freshness
-from liminal_lib.config import ConfigError, load_settings
-from liminal_lib.errors import NotEntitled, Unauthorized
-from liminal_lib.sources import build_source, feed_profiles, markets, provider, rate_window, registry, stream, supports
-from liminal_lib.symbols import resolve
+from liminal_libs import composite, freshness
+from liminal_libs.config import ConfigError, load_settings
+from liminal_libs.errors import NotEntitled, Unauthorized
+from liminal_libs.sources import build_source, feed_profiles, markets, provider, rate_window, registry, stream, supports
+from liminal_libs.symbols import resolve
 
-import liminal_plugin_alpaca as alpaca
-from liminal_plugin_alpaca import ALPACA, ALPACA_TIERS, BOATS, AlpacaFeed, AlpacaIexStream, AlpacaPlugin, BlueOcean
-from liminal_plugin_alpaca.client import AlpacaClient, AlpacaSource, _ns, normalize_trade
+import plugin_integrator_alpaca as alpaca
+from plugin_integrator_alpaca import ALPACA, ALPACA_TIERS, BOATS, AlpacaFeed, AlpacaIexStream, AlpacaPlugin, BlueOcean
+from plugin_integrator_alpaca.client import AlpacaClient, AlpacaSource, _ns, normalize_trade
 
 from .conftest import FakeResponse, FakeSession
 
@@ -188,13 +188,13 @@ def test_the_app_loads_its_two_feeds_from_this_package_with_its_own_version():
     for name in ("alpaca", "boats"):
         p = provider(name)
         assert p is not None, dict(registry.errors())
-        assert p.origin in {"package: liminal-plugin-alpaca (liminal_plugin_alpaca)", "plugins/liminal-plugin-alpaca (liminal_plugin_alpaca)"}  # its package, or its checkout in the workspace\'s plugin directory
-        assert p.version == version("liminal-plugin-alpaca") and p.api == "2.0"
+        assert p.origin in {"package: plugin-integrator-alpaca (plugin_integrator_alpaca)", "plugins/plugin-integrator-alpaca (plugin_integrator_alpaca)"}  # its package, or its checkout in the workspace\'s plugin directory
+        assert p.version == version("plugin-integrator-alpaca") and p.api == "2.0"
         assert registry.api_refusal(p.api) is None
     assert alpaca.ALPACA.version == "" and alpaca.BOATS.version == "" and alpaca.ALPACA.has_settings
     assert not [why for where, why in registry.errors() if "alpaca" in where or "alpaca" in why]
     row = {r["name"]: r for r in registry.menu()}["alpaca"]
-    assert (row["version"], row["api"]) == (version("liminal-plugin-alpaca"), "2.0")
+    assert (row["version"], row["api"]) == (version("plugin-integrator-alpaca"), "2.0")
     assert registry.plugin_feeds("alpaca") == ["alpaca", "boats"] and registry.plugin_of("boats") == "alpaca"
 
 
