@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 (2026-11-03)
+
+Classes on plugin API 2.0 (liminal-lib 1.3.0; the user: "all the plugins under liminal should basically
+follow inheritance/oop paradigm"), versioned 0.2.0 with Liminal's release (every distribution at 0.2.0 on
+a `release/0.2.0` branch). The two feeds are `AlpacaPlugin` (`ALPACA`) and `BlueOcean` (`BOATS`, the
+part: `part_of`, `partial`), both `AlpacaFeed`, the base holding what they declare and do alike (the
+account's keys, `view`, `has_keys`, the plans' publication delays); what each declares is a class
+attribute of the record field's name, what it does a method of the callback's (Alpaca's `settings`,
+`build`, `markets`, `scan`, its IEX stream a `live` property signed in with `stream_keys`; Blue Ocean's
+`build`, `rate`, `markets`, `scan`, once `build_boats` and `boats_scan`). The feeds declare what the
+library's `freshness.py` held for them: `AlpacaFeed.delays` (the alpaca-basic and alpaca-plus rows) and
+`BlueOcean.hours` (its market's overnight hours). Nothing they do changed: the same settings, requests,
+scans, strings and limits.
+
 ## 1.4.1 (2026-11-02)
 
 The plugin imports the library as `liminal_lib` and depends on liminal-lib (the app, renamed liminal-app, is no longer needed to run the tests; the user, 2026-11-02: "lets rename the app to liminal-app").

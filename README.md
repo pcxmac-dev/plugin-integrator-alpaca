@@ -12,15 +12,16 @@ one account's keys:
 
 Both feeds share the account's limits: one rate window, one daily cap.
 
-A Liminal provider plugin released on its own. The app finds it through the entry point group
-`liminal.providers` and lists it on the Plugins view and in `liminal plugins`
-as `package: liminal-plugin-alpaca`, with this package's version.
+A Liminal provider plugin released on its own: a class each on the class contract (plugin API 2.0),
+`AlpacaPlugin` and `BlueOcean`, both `AlpacaFeed` (a `FeedPlugin`, what the two share). The app finds it
+through the entry point group `liminal.providers` and lists it on the Plugins view and in
+`liminal plugins` as `package: liminal-plugin-alpaca`, with this package's version.
 
 ## Settings
 
 User environment variables, saved with the app's `tools/set-key.ps1` or on the Plugins view; keys
 are only ever read from the environment and never written to a file. They are the plugin's own
-settings (plugin API 1.11), read when the app's settings load:
+settings (the plugin's `settings` hook), read when the app's settings load:
 
 | Variable | Meaning |
 | --- | --- |
@@ -37,7 +38,7 @@ settings (plugin API 1.11), read when the app's settings load:
 Into the app's environment, from the app's folder:
 
 ```powershell
-.venv\Scripts\python.exe -m pip install "liminal-plugin-alpaca @ git+https://github.com/pcxmac-dev/liminal-plugin-alpaca@v1.4.1"
+.venv\Scripts\python.exe -m pip install "liminal-plugin-alpaca @ git+https://github.com/pcxmac-dev/liminal-plugin-alpaca@v0.2.0"
 ```
 
 or with the app's plugins (`pip install -e ".[plugins]"` in liminal-app). The app loads it on its next
@@ -45,15 +46,15 @@ start.
 
 ## Compatibility
 
-It is written for plugin API 1.11 (`PLUGIN.api`: a plugin's own settings). An app offering 1.11 or a
-later 1.x loads it; an app of another major, or one older than 1.11, leaves it out and says why on
-the Plugins view.
+It is written for plugin API 2.0 (each feed's `api`: the class contract of liminal-lib 1.3.0, a plugin
+an instance of a `FeedPlugin` subclass). An app offering 2.0 or a later 2.x loads it; an app of another
+major leaves it out and says why on the Plugins view.
 
 ## Develop
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install "liminal-lib @ git+https://github.com/pcxmac-dev/liminal-lib@main"
+.venv\Scripts\python.exe -m pip install "liminal-lib @ git+https://github.com/pcxmac-dev/liminal-lib@release/0.2.0"
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 .venv\Scripts\python.exe -m pytest -q
 ```

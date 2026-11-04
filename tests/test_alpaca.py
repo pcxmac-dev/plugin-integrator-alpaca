@@ -1,6 +1,7 @@
 """The Alpaca plugin, run against the app installed beside it: its requests' shapes, the 15-minute
 block, keys never sent where they should not be, its IEX stream's messages, its own settings, and the
-app loading its two feeds from this package with its own version and the facts they had as built-ins."""
+app loading its two feeds from this package (AlpacaPlugin and BlueOcean, plugin API 2.0) with its own
+version and the facts they had as built-ins."""
 from __future__ import annotations
 
 import json
@@ -9,14 +10,14 @@ from importlib.metadata import version
 
 import pytest
 
-from liminal_lib import composite
+from liminal_lib import composite, freshness
 from liminal_lib.config import ConfigError, load_settings
 from liminal_lib.errors import NotEntitled, Unauthorized
 from liminal_lib.sources import build_source, feed_profiles, markets, provider, rate_window, registry, stream, supports
 from liminal_lib.symbols import resolve
 
 import liminal_plugin_alpaca as alpaca
-from liminal_plugin_alpaca import ALPACA_TIERS, AlpacaIexStream, settings_of
+from liminal_plugin_alpaca import ALPACA, ALPACA_TIERS, BOATS, AlpacaFeed, AlpacaIexStream, AlpacaPlugin, BlueOcean
 from liminal_plugin_alpaca.client import AlpacaClient, AlpacaSource, _ns, normalize_trade
 
 from .conftest import FakeResponse, FakeSession
@@ -169,14 +170,14 @@ def test_its_settings_are_its_own_read_with_the_apps_and_a_bad_value_stops_the_a
     src = build_source("alpaca", s, request_budget=5)
     assert src.client.trading_url == "https://api.alpaca.markets" and src.client.request_budget == 5
     assert src.feed == "sip" and src.crypto_loc == "us-1" and not src.realtime
-    plus = settings_of({**KEYS, "ALPACA_PLAN": "algo_trader_plus", "ALPACA_RPM": "500", "ALPACA_CRYPTO_LOC": "us",
-                        "ALPACA_MAX_REQUESTS_PER_DAY": "99"})
+    plus = ALPACA.settings({**KEYS, "ALPACA_PLAN": "algo_trader_plus", "ALPACA_RPM": "500", "ALPACA_CRYPTO_LOC": "us",
+                            "ALPACA_MAX_REQUESTS_PER_DAY": "99"})
     assert (plus.tier.name, plus.tier.requests_per_minute, plus.crypto_loc, plus.max_requests_per_day) == ("alpaca-plus", 500, "us", 99)
-    assert settings_of({"APCA_API_KEY_ID": " a\n", "APCA_API_SECRET_KEY": "b"}).key_id == "a"  # Alpaca's own names; stripped
+    assert ALPACA.settings({"APCA_API_KEY_ID": " a\n", "APCA_API_SECRET_KEY": "b"}).key_id == "a"  # Alpaca's own names; stripped
     for bad in ({"ALPACA_FEED": "nasdaq"}, {"ALPACA_PLAN": "platinum"}, {"ALPACA_CRYPTO_LOC": "mars"},
                 {"ALPACA_MAX_REQUESTS_PER_RUN": "-1"}):
         with pytest.raises(ConfigError):
-            settings_of(bad)
+            ALPACA.settings(bad)
         with pytest.raises(ConfigError):
             load_settings(env=bad, env_file=None)  # the app's settings refuse it too, as they load
 
@@ -188,13 +189,40 @@ def test_the_app_loads_its_two_feeds_from_this_package_with_its_own_version():
         p = provider(name)
         assert p is not None, dict(registry.errors())
         assert p.origin in {"package: liminal-plugin-alpaca (liminal_plugin_alpaca)", "plugins/liminal-plugin-alpaca (liminal_plugin_alpaca)"}  # its package, or its checkout in the workspace\'s plugin directory
-        assert p.version == version("liminal-plugin-alpaca") and p.api == "1.11"
+        assert p.version == version("liminal-plugin-alpaca") and p.api == "2.0"
         assert registry.api_refusal(p.api) is None
-    assert alpaca.ALPACA.version == "" and alpaca.BOATS.version == "" and alpaca.ALPACA.settings is settings_of
+    assert alpaca.ALPACA.version == "" and alpaca.BOATS.version == "" and alpaca.ALPACA.has_settings
     assert not [why for where, why in registry.errors() if "alpaca" in where or "alpaca" in why]
     row = {r["name"]: r for r in registry.menu()}["alpaca"]
-    assert (row["version"], row["api"]) == (version("liminal-plugin-alpaca"), "1.11")
+    assert (row["version"], row["api"]) == (version("liminal-plugin-alpaca"), "2.0")
     assert registry.plugin_feeds("alpaca") == ["alpaca", "boats"] and registry.plugin_of("boats") == "alpaca"
+
+
+def test_its_feeds_are_classes_on_plugin_api_2_0_and_the_app_loads_them_as_such():
+    assert isinstance(ALPACA, AlpacaPlugin) and isinstance(BOATS, BlueOcean) and alpaca.PLUGINS == (ALPACA, BOATS)
+    assert isinstance(ALPACA, AlpacaFeed) and isinstance(BOATS, AlpacaFeed)  # one plugin: what both share
+    assert ALPACA.api == "2.0" == BOATS.api and not ALPACA.is_record and not BOATS.is_record
+    assert BOATS.keys is ALPACA.keys and BOATS.signup == ALPACA.signup and BOATS.kind == "exchange" == ALPACA.kind
+    assert ALPACA.has_settings and ALPACA.has_scan and ALPACA.gives("build") and ALPACA.gives("markets")
+    assert ALPACA.gives("view") and ALPACA.gives("has_keys") and not ALPACA.gives("rate") and not ALPACA.gives("serves")
+    assert BOATS.has_scan and not BOATS.has_settings and BOATS.settings_of({}) is None  # the part reads Alpaca's
+    assert BOATS.gives("build") and BOATS.gives("rate") and BOATS.gives("markets") and BOATS.gives("view") and BOATS.gives("has_keys")
+    assert BOATS.partial and BOATS.part_of == "alpaca" and BOATS.account == "alpaca" and BOATS.hours == {"stock": "overnight"}
+    assert ALPACA.hours == {} and not ALPACA.partial and ALPACA.live[0].credentials == ALPACA.stream_keys and BOATS.live == ()
+    # the plans' publication delays and Blue Ocean's hours, the library's rows, declared by the feeds (2.0)
+    assert set(ALPACA.delays) == {"alpaca-basic", "alpaca-plus"} and BOATS.delays is ALPACA.delays
+    registry.reload()
+    assert freshness.plan_delay(ALPACA_TIERS["basic"], "stock").lag == timedelta(minutes=16)
+    assert freshness.plan_delay(ALPACA_TIERS["basic"], "overnight").lag == timedelta(minutes=16)
+    assert freshness.plan_delay(ALPACA_TIERS["basic"], "crypto").describe() == "real time"
+    assert freshness.plan_delay(ALPACA_TIERS["algo_trader_plus"], "stock").describe() == "real time"
+    assert freshness.hours("boats", "stock") == "overnight" and freshness.hours("alpaca", "stock") == "stock"
+    assert freshness.DELAYS.declare(ALPACA) is False and freshness.DELAYS.declare(BOATS) is False  # declared already
+    # the registry loads them as the classes: a copy each (its origin and version set), the same type
+    p, boats = registry.providers()["alpaca"], registry.providers()["boats"]
+    assert type(p) is AlpacaPlugin and type(boats) is BlueOcean and p is not ALPACA and boats is not BOATS
+    assert p.has_settings and boats.hours == {"stock": "overnight"} and boats.partial and "iex" in registry.live_feeds()
+    assert repr(ALPACA) == "<AlpacaPlugin 'alpaca': built in>" and repr(boats).startswith("<BlueOcean 'boats': ")
 
 
 def test_it_keeps_the_facts_it_had_built_in():

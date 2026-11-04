@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "liminal-plugin-alpaca"
-version = "1.4.1"  # the plugin's own release (CHANGELOG.md); the app shows it on the Plugins view
+version = "0.2.0"  # the plugin's own release (CHANGELOG.md; every distribution of Liminal at 0.2.0 on release/0.2.0); the app shows it on the Plugins view
 description = "Alpaca for Liminal: US stock and crypto bars and streams on Alpaca's API, with its overnight feed on Blue Ocean."
 readme = "README.md"
 requires-python = ">=3.10"
 # the app it plugs into; which of its releases can load it is the plugin API the plugin declares
-# (PLUGIN.api, checked when the app loads it), not this line
+# (the feeds' api, checked when the app loads it: 2.0, the class contract of liminal-lib 1.3.0), not this line
 dependencies = ["liminal-lib"]
 
 [project.optional-dependencies]
