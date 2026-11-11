@@ -12,10 +12,33 @@ one account's keys:
 
 Both feeds share the account's limits: one rate window, one daily cap.
 
-A Liminal provider plugin released on its own: a class each on the class contract (plugin API 2.0),
+A Liminal provider plugin released on its own: a class each on the class contract (plugin API 2.2),
 `AlpacaPlugin` and `BlueOcean`, both `AlpacaFeed` (a `FeedPlugin`, what the two share). The app finds it
 through the entry point group `liminal.providers` and lists it on the Plugins view and in
 `liminal-charts plugins` as `package: plugin-integrator-alpaca`, with this package's version.
+
+## Its API
+
+Both feeds attach to three of Alpaca's APIs, the keys sent as the `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY`
+headers: the Market Data API at `https://data.alpaca.markets` (bars, trades, the exchange codes), the Trading API at
+`https://paper-api.alpaca.markets` or `https://api.alpaca.markets` (an asset's record, nothing else), and the market
+data stream at `wss://stream.data.alpaca.markets/v2/iex` (IEX's trades). The cards on its page in every app (`apis`,
+plugin API 2.2: `src/plugin_integrator_alpaca/apis.py`, read from Alpaca's pages on 2026-11-11) say what each API is,
+its limits and prices, every part of it and every call or message used here:
+
+- Documentation: <https://docs.alpaca.markets/us/docs/about-market-data-api>, the reference from
+  <https://docs.alpaca.markets/us/reference/stockbars>, the Trading API at
+  <https://docs.alpaca.markets/us/docs/trading-api>, the streams at
+  <https://docs.alpaca.markets/us/docs/streaming-market-data>
+- Plans and pricing: <https://alpaca.markets/data> (Basic, free: 200 requests a minute, the consolidated tape up to
+  15 minutes ago; Algo Trader Plus, $99 a month: 10,000 a minute, all of it live)
+- Status: <https://status.alpaca.markets/>
+- Dashboard (API keys): <https://app.alpaca.markets>
+
+Used here: stocks' bars and trades (SIP or IEX; Blue Ocean's nights with `feed=boats`), crypto's bars and trades, the
+exchange codes, an asset's record, and IEX's trades live. Not used: quotes, snapshots, auctions, options, news,
+corporate actions, the screener, logos, fixed income, the other streams, and everything of the Trading API but the
+assets (no order is ever placed).
 
 ## Settings
 
@@ -38,7 +61,7 @@ settings (the plugin's `settings` hook), read when the app's settings load:
 Into the app's environment, from the app's folder:
 
 ```powershell
-.venv\Scripts\python.exe -m pip install "plugin-integrator-alpaca @ git+https://github.com/pcxmac-dev/plugin-integrator-alpaca@v0.2.0"
+.venv\Scripts\python.exe -m pip install "plugin-integrator-alpaca @ git+https://github.com/pcxmac-dev/plugin-integrator-alpaca@v0.3.0"
 ```
 
 or with the app's plugins (`pip install -e ".[plugins]"` in liminal-charts). The app loads it on its next
@@ -46,9 +69,10 @@ start.
 
 ## Compatibility
 
-It is written for plugin API 2.0 (each feed's `api`: the class contract of liminal-libs 1.3.0, a plugin
-an instance of a `FeedPlugin` subclass). An app offering 2.0 or a later 2.x loads it; an app of another
-major leaves it out and says why on the Plugins view.
+It is written for plugin API 2.2 (each feed's `api`: the class contract of liminal-libs 1.3.0, a plugin
+an instance of a `FeedPlugin` subclass, with the API cards of liminal-libs 1.49.0). An app offering 2.2 or a
+later 2.x loads it; an app offering an older 2.x, or another major, leaves it out and says why on the Plugins
+view.
 
 ## Develop
 
@@ -59,4 +83,5 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Tests never send requests (a fake session answers) and never read your keys.
+Tests never send requests (a fake session answers) and never read your keys. One test asks every address on the
+APIs' cards, only with `LIMINAL_VENDOR_PAGES=1` set.

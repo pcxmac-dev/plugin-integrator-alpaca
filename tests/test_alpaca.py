@@ -1,6 +1,6 @@
 """The Alpaca plugin, run against the app installed beside it: its requests' shapes, the 15-minute
 block, keys never sent where they should not be, its IEX stream's messages, its own settings, and the
-app loading its two feeds from this package (AlpacaPlugin and BlueOcean, plugin API 2.0) with its own
+app loading its two feeds from this package (AlpacaPlugin and BlueOcean, plugin API 2.2) with its own
 version and the facts they had as built-ins."""
 from __future__ import annotations
 
@@ -182,6 +182,18 @@ def test_its_settings_are_its_own_read_with_the_apps_and_a_bad_value_stops_the_a
             load_settings(env=bad, env_file=None)  # the app's settings refuse it too, as they load
 
 
+def own_version(origin: str) -> str:
+    """This distribution's version as the registry read it: its checkout's pyproject.toml when loaded from the
+    workspace's plugin directory, else the installed package's (an editable install's record keeps the version it
+    was installed at until it is installed again)."""
+    if origin.startswith("plugins/"):
+        import tomllib
+        from pathlib import Path
+
+        return tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    return version("plugin-integrator-alpaca")
+
+
 def test_the_app_loads_its_two_feeds_from_this_package_with_its_own_version():
     registry.reload()
     assert [p.name for p in alpaca.PLUGINS] == ["alpaca", "boats"] and not hasattr(alpaca, "PLUGIN")
@@ -189,19 +201,19 @@ def test_the_app_loads_its_two_feeds_from_this_package_with_its_own_version():
         p = provider(name)
         assert p is not None, dict(registry.errors())
         assert p.origin in {"package: plugin-integrator-alpaca (plugin_integrator_alpaca)", "plugins/plugin-integrator-alpaca (plugin_integrator_alpaca)"}  # its package, or its checkout in the workspace\'s plugin directory
-        assert p.version == version("plugin-integrator-alpaca") and p.api == "2.0"
+        assert p.version == own_version(p.origin) and p.api == "2.2"
         assert registry.api_refusal(p.api) is None
     assert alpaca.ALPACA.version == "" and alpaca.BOATS.version == "" and alpaca.ALPACA.has_settings
     assert not [why for where, why in registry.errors() if "alpaca" in where or "alpaca" in why]
     row = {r["name"]: r for r in registry.menu()}["alpaca"]
-    assert (row["version"], row["api"]) == (version("plugin-integrator-alpaca"), "2.0")
+    assert (row["version"], row["api"]) == (own_version(p.origin), "2.2")
     assert registry.plugin_feeds("alpaca") == ["alpaca", "boats"] and registry.plugin_of("boats") == "alpaca"
 
 
-def test_its_feeds_are_classes_on_plugin_api_2_0_and_the_app_loads_them_as_such():
+def test_its_feeds_are_classes_on_plugin_api_2_2_and_the_app_loads_them_as_such():
     assert isinstance(ALPACA, AlpacaPlugin) and isinstance(BOATS, BlueOcean) and alpaca.PLUGINS == (ALPACA, BOATS)
     assert isinstance(ALPACA, AlpacaFeed) and isinstance(BOATS, AlpacaFeed)  # one plugin: what both share
-    assert ALPACA.api == "2.0" == BOATS.api and not ALPACA.is_record and not BOATS.is_record
+    assert ALPACA.api == "2.2" == BOATS.api and not ALPACA.is_record and not BOATS.is_record
     assert BOATS.keys is ALPACA.keys and BOATS.signup == ALPACA.signup and BOATS.kind == "exchange" == ALPACA.kind
     assert ALPACA.has_settings and ALPACA.has_scan and ALPACA.gives("build") and ALPACA.gives("markets")
     assert ALPACA.gives("view") and ALPACA.gives("has_keys") and not ALPACA.gives("rate") and not ALPACA.gives("serves")

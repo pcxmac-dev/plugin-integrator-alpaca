@@ -3,14 +3,20 @@ and Blue Ocean's overnight session through the same keys, a feed of its own (BOA
 
 A Liminal plugin released on its own, registered under the entry point group `liminal.providers` as
 `alpaca`: one plugin, two feeds (PLUGINS: `alpaca`, `boats`), a class each on the class contract
-(plugin API 2.0, liminal_libs.sources.plugin: what a feed declares class attributes, what it does
+(plugin API 2.2, liminal_libs.sources.plugin: what a feed declares class attributes, what it does
 methods): `AlpacaPlugin` (ALPACA) and `BlueOcean` (BOATS) share the base `AlpacaFeed`, which holds
 what both declare and do alike (the account's keys, its settings' view, its plans' publication
 delays). Its keys, plan, feed, crypto venue, paper or live host and request caps are its own settings
 (AlpacaSettings, from the variables the app read: AlpacaPlugin.settings, the `settings` hook),
-reached with `settings.plugin("alpaca")` by both feeds. It relies on plugin API 2.0 and nothing of
+reached with `settings.plugin("alpaca")` by both feeds. It relies on plugin API 2.2 and nothing of
 the app outside the contract (docs/ARCHITECTURE.md in liminal: "Providers are plugins"); its
 version is this distribution's (pyproject.toml), so the classes' versions are left empty.
+
+What it attaches to (plugin API 2.2, `apis`: the cards in apis.py, both feeds' alike): Alpaca's Market
+Data API, its Trading API (an asset's record) and its market data stream (IEX's trades), each with
+Alpaca's pages, every part of it said used here or not, and its calls, the ones made here first. What
+it learned of them while it ran it does not say (api_facts, the contract's: nothing): the instances
+hold no run's state, the requests and rate-limit headers of a run are its client's.
 
 Its scan finds the plan: Algo Trader Plus serves the consolidated tape's latest 15 minutes, Basic
 refuses them; it sets ALPACA_PLAN where you have not.
@@ -45,6 +51,7 @@ from liminal_libs.config import ConfigError, Tier
 from liminal_libs.freshness import Delay
 from liminal_libs.sources.registry import FeedPlugin, KeyVar, Scanned, limiter, machine_caps
 from liminal_libs.sources.stream import PING, Live, Notice, Refused
+from .apis import APIS, DASHBOARD, STREAM_URL
 from .client import PAGE_LIMIT, TRADING_URLS, AlpacaClient, AlpacaSource, BoatsSource, normalize_trade
 
 IEX_FEED = "iex"  # its live stream's feed: IEX's trades, one venue's share (alpaca (iex))
@@ -128,7 +135,7 @@ class AlpacaIexStream:
     key_id: str = field(default="", repr=False)
     secret_key: str = field(default="", repr=False)
     source: str = IEX_FEED
-    url: str = "wss://stream.data.alpaca.markets/v2/iex"
+    url: str = STREAM_URL  # wss://stream.data.alpaca.markets/v2/iex (the stream's card)
     keepalive: str | None = PING
     dynamic: bool = True  # symbols from the charts (and watchlists: wanted_stocks), not LIVE_COINS
     asset: str = "stock"
@@ -183,12 +190,13 @@ class AlpacaIexStream:
 class AlpacaFeed(FeedPlugin):
     """What Alpaca's two feeds declare and do alike, on one account: its keys and where they are made,
     the app's settings as each sees them (Alpaca's plan and caps: `view`), whether the keys are set,
-    and the plans' publication delays."""
+    the plans' publication delays, and what both attach to (`apis`: Alpaca's three APIs)."""
 
-    api = "2.0"  # the contract this plugin is written for (the classes; its own settings); its version: the distribution's
+    api = "2.2"  # the contract this plugin is written for (the classes; its own settings; its APIs' cards); its version: the distribution's
     keys = (KeyVar("ALPACA_API_KEY_ID", "key ID", ("APCA_API_KEY_ID",)),
             KeyVar("ALPACA_API_SECRET_KEY", "secret key", ("APCA_API_SECRET_KEY",)))
-    signup = "alpaca.markets: a paper account's API keys"
+    signup = DASHBOARD  # Alpaca's dashboard, where a (paper) account's API keys are made (the cards' console link)
+    apis = APIS  # the Market Data API, the Trading API and the market data stream (apis.py), both feeds'
     kind = "exchange"
     # When each plan publishes (the rows the library's freshness.PLAN_DELAYS held for Alpaca, declared
     # by the feeds themselves since 2.0): Basic serves everything but the latest 15 minutes; crypto is
