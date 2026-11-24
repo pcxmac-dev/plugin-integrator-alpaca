@@ -100,6 +100,17 @@ def _rfc3339(t: datetime) -> str:
     return t.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f") + "Z"
 
 
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+
+def _from_ns(ns: int, up: bool = False) -> datetime:
+    """Nanoseconds since 1970 as a time Alpaca can be sent (it takes microseconds), floored, or ceiled with `up`, so
+    the window asked for always holds [gte, lt). In integers: a float of nanoseconds since 1970 is only good to about
+    a quarter of a microsecond, and the old `ns / 1e9` could round a start up past its first tick or an end down
+    before its last (the review of 2026-11-21, item 26)."""
+    return _EPOCH + timedelta(microseconds=-(-ns // 1000) if up else ns // 1000)
+
+
 def _ms(ts: str) -> int:
     return int(datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp() * 1000)
 
@@ -229,8 +240,8 @@ class AlpacaSource(DataSource):
         self._need_keys(asset)
         blocked = timedelta(0) if self.realtime or crypto else RECENT_SIP_BLOCK
         now = self._now() - blocked
-        start = datetime.fromtimestamp(gte_ns / 1e9, timezone.utc) if gte_ns is not None else now - timedelta(days=1)
-        end = datetime.fromtimestamp(lt_ns / 1e9, timezone.utc) if lt_ns is not None else now
+        start = _from_ns(gte_ns) if gte_ns is not None else now - timedelta(days=1)
+        end = _from_ns(lt_ns, up=True) if lt_ns is not None else now
         end = min(end, now)
         if start >= end:
             return
@@ -241,7 +252,9 @@ class AlpacaSource(DataSource):
             params["feed"] = self.feed
         for page in self.client.pages(self._path(asset, "trades"), params, "trades"):
             rows = [normalize_trade(t) for t in page.get(symbol, [])]
-            yield [r for r in rows if r and (lt_ns is None or r["sip_timestamp"] < lt_ns)]
+            # the window is whole microseconds around [gte, lt): ticks just outside it are dropped here
+            yield [r for r in rows if r and (lt_ns is None or r["sip_timestamp"] < lt_ns)
+                   and (gte_ns is None or r["sip_timestamp"] >= gte_ns)]
             if limit != PAGE_LIMIT:
                 return
 

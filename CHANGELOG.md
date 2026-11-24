@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1 (2026-11-24)
+
+Tick bounds kept to the nanosecond (the review of 2026-11-21, item 26). `trade_pages` turned `gte_ns` and `lt_ns` into
+times through a float (`ns / 1e9`), which is only good to about a quarter of a microsecond and was then rounded to
+the nearest microsecond: a start could round up past its first tick and an end down before its last. The start is
+now floored and the end ceiled to the microsecond in integers (`_from_ns`), and the ticks the wider window brings
+back from outside [gte, lt) are dropped. No caller asked for sub-microsecond bounds yet. Test: a one-nanosecond
+window around a tick asks for whole microseconds around it and keeps only that tick.
+
 ## 0.3.0 (2026-11-11)
 
 Its APIs on its page (plugin API 2.2, liminal-libs 1.49.0; the user: "each plugin should reflect the the API its

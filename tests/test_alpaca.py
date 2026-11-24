@@ -103,6 +103,24 @@ def test_crypto_ticks_need_no_key():
     assert pages[0][0]["sip_timestamp"] == 1792670400200261576
 
 
+def test_tick_bounds_floor_the_start_and_ceil_the_end_to_the_microsecond():
+    """The review of 2026-11-21, item 26: `ns / 1e9` rounded both bounds, so a window around one tick asked for
+    nothing (its start rounded up past the tick) or lost the tick at its ends."""
+    tick = "2026-10-22T12:00:00.200261576Z"
+    session = FakeSession([FakeResponse(200, {"trades": {"BTC/USD": [
+        {"i": 7, "p": 81658, "s": 0.0004, "t": "2026-10-22T12:00:00.200261000Z", "tks": "B"},
+        {"i": 8, "p": 81658, "s": 0.0004, "t": tick, "tks": "B"},
+        {"i": 9, "p": 81658, "s": 0.0004, "t": "2026-10-22T12:00:00.200261999Z", "tks": "B"}]},
+        "next_page_token": None})])
+    src = AlpacaSource(AlpacaClient(None, None, session=session, sleep=lambda s: None),
+                       now=lambda: datetime(2026, 10, 22, 13, 0, tzinfo=timezone.utc))
+    ns = _ns(tick)
+    pages = list(src.trade_pages("X:BTCUSD", gte_ns=ns, lt_ns=ns + 1))
+    params = session.calls[0][1]
+    assert params["start"] == "2026-10-22T12:00:00.200261Z" and params["end"] == "2026-10-22T12:00:00.200262Z"
+    assert [t["id"] for t in pages[0]] == ["8"]  # the ticks just outside [gte, lt) are not kept
+
+
 def test_reference_uses_the_trading_api_host_and_crypto_needs_none():
     src, session = _source([FakeResponse(200, {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ",
                                                "status": "active"})])
